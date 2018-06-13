@@ -11,6 +11,9 @@ from keras.applications.imagenet_utils import preprocess_input, decode_predictio
 from keras.models import load_model
 from keras.preprocessing import image
 
+#pillow
+from PIL import Image
+
 # OpenCV
 import cv2
 
@@ -38,7 +41,7 @@ print('Model loaded. Check http://127.0.0.1:5000/')
 
 def faceDetectionFromPath(path, size):
     cvImg = cv2.imread(path)
-    cascade_path = "./lib/haarcascade_frontalface_alt.xml"
+    cascade_path = "./lib/haarcascade_frontalface_default.xml"
     cascade = cv2.CascadeClassifier(cascade_path)
     facerect = cascade.detectMultiScale(cvImg, scaleFactor=1.1, minNeighbors=1, minSize=(1, 1))
     faceData = []
@@ -57,10 +60,11 @@ def model_predict(img_path, model):
     faceImgs = faceDetectionFromPath(img_path, img_rows)
     x = []
     for faceImg in faceImgs:
-        x.append(image.img_to_array(faceImg))
+        faceImg.show()
+        img = image.img_to_array(faceImg) / 255.0
+        x.append(np.expand_dims(img,axis=0))
 
     # Preprocessing the image
-    x = np.true_divide(x, 255)
     # x = np.expand_dims(x, axis=0)
 
     # Be careful how your trained model deals with the input
@@ -92,11 +96,12 @@ def upload():
         res = ['ジーズ生', 'ジーズ生じゃない']
         # Make prediction
         preds = model_predict(file_path, model)
+        print(preds)
         for pred in preds:
-            predR = np.round(pred)
-            for pre_i in np.arange(len(predR)):
-                if predR[pre_i] == 1:
-                    result = res[pre_i]
+            if pred > 0.5:
+                result = 'ジーズ生'
+            else:
+                result = 'ジーズ生じゃない'
 
         return result
     return None
